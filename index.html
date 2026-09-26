@@ -93,7 +93,7 @@
   .meta input:focus{outline:none;border-bottom-color:var(--brand3);}
 
   .tableScroll{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #dde5e3;border-radius:12px;max-height:50vh;}
-  table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;}
+  table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto;}
   th,td{border-right:1px solid #e3e9e7;border-bottom:1px solid #e3e9e7;padding:10px 9px;text-align:center;font-size:13px;white-space:nowrap;}
   thead th{font-weight:700;background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#fff;position:sticky;top:0;z-index:2;border-color:#0a332f;}
   thead th:first-child{left:0;z-index:4;}
@@ -112,7 +112,7 @@
   td input{border:none;background:transparent;color:var(--ink);text-align:center;font-size:14px;padding:6px 4px;
     width:100%;min-width:70px;-moz-appearance:textfield;font-family:inherit;}
   td input::-webkit-outer-spin-button, td input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  td.brand{text-align:left;white-space:normal;min-width:140px;}
+  td.brand{text-align:left;}
   td.brand input{text-align:left;min-width:120px;}
   td.readonly{background:#eaf6f3;font-weight:700;color:var(--brand1);}
   .rowdel{cursor:pointer;color:var(--danger);font-weight:bold;font-size:16px;padding:6px 10px;}
@@ -260,13 +260,14 @@
 
     <div class="tableScroll">
       <table id="orderTable">
+        <colgroup id="colGroup"></colgroup>
         <thead><tr id="headRow"></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
     <button class="addrow" id="addRowBtn">+ Add Row</button>
 
-    <div class="sig">Signature <span class="line"></span></div>
+    <!-- <div class="sig">Signature <span class="line"></span></div> -->
   </div>
 
   <div class="history" id="historyPanel" style="display:none;">
@@ -325,8 +326,43 @@ function openModal({title, message, confirmText='Confirm', cancelText='Cancel', 
 document.getElementById('modalConfirm').onclick = ()=>{ document.getElementById('modalOverlay').classList.add('hide'); modalResolve && modalResolve(true); };
 document.getElementById('modalCancel').onclick = ()=>{ document.getElementById('modalOverlay').classList.add('hide'); modalResolve && modalResolve(false); };
 
+/* ================= AUTO-FIT COLUMN WIDTHS (app + print both use the same <colgroup>) ================= */
+const measureCtx = document.createElement('canvas').getContext('2d');
+function textWidth(text, font){ measureCtx.font = font; return measureCtx.measureText(text || '').width; }
+function buildColGroup(){
+  const cg = document.getElementById('colGroup');
+  cg.innerHTML = '';
+  COLS.forEach(col=>{
+    const c = document.createElement('col');
+    c.setAttribute('data-key', col.key);
+    cg.appendChild(c);
+  });
+  const delCol = document.createElement('col');
+  delCol.className = 'delcol';
+  delCol.style.width = '40px';
+  cg.appendChild(delCol);
+}
+function autofitColumn(key){
+  const col = COLS.find(c=>c.key===key);
+  const colEl = document.querySelector(`col[data-key="${key}"]`);
+  if (!col || !colEl) return;
+  const headerFont = '700 13px Inter, Arial, sans-serif';
+  const cellFont = '400 14px Inter, Arial, sans-serif';
+  const label = columnLabels[key] || DEFAULT_LABELS[key];
+  let max = textWidth(label, headerFont) + (col.type==='computed' ? 28 : 80); // room for header padding + copy/paste icons
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const text = col.type==='computed' ? (cellFor(tr,key)?.textContent || '') : (fieldInput(tr,key)?.value || '');
+    const w = textWidth(text, cellFont) + 28;
+    if (w > max) max = w;
+  });
+  const minW = key==='brand' ? 140 : (col.type==='computed' ? 80 : 70);
+  colEl.style.width = Math.max(minW, Math.ceil(max)) + 'px';
+}
+function autofitAll(){ COLS.forEach(c=>autofitColumn(c.key)); }
+
 /* ================= HEADER ================= */
 function buildHeader(){
+  buildColGroup();
   const headRow = document.getElementById('headRow');
   headRow.innerHTML = '';
   COLS.forEach(col=>{
@@ -340,6 +376,7 @@ function buildHeader(){
       columnLabels[col.key] = span.textContent.trim() || DEFAULT_LABELS[col.key];
       const brandCell = document.querySelector('tr.grandRow td.brand');
       if (brandCell) brandCell.textContent = 'GRAND TOTAL';
+      autofitColumn(col.key);
       queueSave(); queueSettingsSave();
     });
     inner.appendChild(span);
@@ -447,6 +484,7 @@ function recalcGrandTotal(){
     const cell = grand.querySelector(`td[data-f="${k}"]`);
     if (cell) cell.textContent = sums[k].toFixed(k==='total'?0:2);
   });
+  autofitAll();
 }
 
 tbody.addEventListener('input', e=>{
