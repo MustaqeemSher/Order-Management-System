@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Order Advice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --card:#fff; --ink:#16211f; --muted:#657572;
+    --brand1:#0b3d3a; --brand2:#127d6e; --brand3:#22c9b0; --gold:#c9a227;
+    --danger:#c0392b; --ok:#0a7a3d;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;color:var(--ink);}
+  body{
+    font-family:'Inter',Arial,Helvetica,sans-serif;
+    min-height:100vh;
+    background:
+      radial-gradient(1100px circle at 8% -8%, #d8f3ee, transparent 42%),
+      radial-gradient(900px circle at 105% 10%, #eaf2df, transparent 45%),
+      linear-gradient(170deg,#f5faf9,#eaf3f1 55%,#e7f1ee);
+  }
+  .hide{display:none !important;}
+  .heading-font{font-family:'Playfair Display',Georgia,serif;}
+
+  /* ================= AUTH ================= */
+  #authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:radial-gradient(circle at 15% 15%,#16847a,#0a2f2c 65%);}
+  .authCard{width:100%;max-width:400px;background:#fff;border-radius:20px;padding:34px 28px;box-shadow:0 30px 80px rgba(0,0,0,.45);}
+  .authLogo{width:54px;height:54px;border-radius:15px;background:linear-gradient(135deg,var(--brand1),var(--brand3));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;margin:0 auto 14px;box-shadow:0 10px 24px rgba(11,61,58,.4);}
+  .authCard h1{font-size:21px;text-align:center;margin:0 0 2px;color:#101a18;font-weight:800;}
+  .authCard p.sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 22px;}
+  .authTabs{display:flex;background:#eef4f2;border-radius:11px;padding:4px;margin-bottom:20px;}
+  .authTabs button{flex:1;border:none;background:transparent;padding:10px 0;border-radius:9px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;}
+  .authTabs button.active{background:#fff;color:var(--brand1);box-shadow:0 2px 6px rgba(0,0,0,.12);}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;font-weight:700;color:#33403d;margin-bottom:5px;}
+  .field input{width:100%;padding:11px 13px;border:1.5px solid #dfe6e4;border-radius:10px;font-size:14px;background:#fafcfb;font-family:inherit;}
+  .field input:focus{outline:none;border-color:var(--brand3);box-shadow:0 0 0 3px rgba(34,201,176,.18);background:#fff;}
+  .authBtn{width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--brand1),var(--brand3));
+    color:#fff;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 10px 24px rgba(11,61,58,.3);font-family:inherit;}
+  .authBtn:disabled{opacity:.6;cursor:default;}
+  .authLinks{display:flex;justify-content:space-between;margin-top:14px;font-size:12.5px;}
+  .authLinks a{color:var(--brand2);cursor:pointer;text-decoration:none;font-weight:700;}
+  .authMsg{font-size:13px;text-align:center;min-height:18px;margin-top:10px;border-radius:9px;padding:9px;}
+  .authMsg.err{background:#fdecea;color:var(--danger);}
+  .authMsg.ok{background:#e8f6ee;color:var(--ok);}
+  .backLink{display:inline-block;margin-bottom:14px;font-size:12.5px;color:var(--brand2);cursor:pointer;font-weight:600;}
+
+  /* ================= MODAL ================= */
+  .modalOverlay{position:fixed;inset:0;background:rgba(8,18,16,.55);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+  .modalCard{background:#fff;border-radius:18px;max-width:380px;width:100%;padding:28px 24px;box-shadow:0 35px 90px rgba(0,0,0,.4);text-align:center;}
+  .modalCard h3{margin:0 0 10px;font-size:17px;color:#101a18;font-weight:800;}
+  .modalCard p{margin:0 0 22px;font-size:13.5px;color:var(--muted);line-height:1.55;}
+  .modalBtns{display:flex;gap:10px;}
+  .modalBtn{flex:1;padding:11px;border-radius:10px;border:1.5px solid #e1e7e5;background:#fff;font-size:13.5px;font-weight:700;cursor:pointer;color:#333;font-family:inherit;}
+  .modalBtn.primary{background:linear-gradient(135deg,var(--brand1),var(--brand3));color:#fff;border:none;}
+  .modalBtn.danger{background:linear-gradient(135deg,#8f271d,var(--danger));color:#fff;border:none;}
+
+  /* ================= APP SHELL ================= */
+  .wrap{max-width:1220px;margin:0 auto;padding:18px 14px 60px;}
+  .topbar{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:14px;
+    background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 6px 22px rgba(11,61,58,.10);flex-wrap:wrap;}
+  .brandMark{display:flex;align-items:center;gap:10px;}
+  .brandMark .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand1),var(--brand3));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;}
+  .brandMark .who{font-size:12px;color:var(--muted);line-height:1.3;}
+  .brandMark .who b{color:var(--ink);font-size:13px;}
+  .btns{display:flex;gap:7px;flex-wrap:wrap;}
+  .btns button{font-family:inherit;font-size:12.5px;font-weight:600;padding:10px 15px;border-radius:10px;border:1.5px solid #e1e7e5;
+    background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap;transition:.15s;}
+  .btns button:hover{background:#f2f8f6;border-color:#cfe0db;}
+  .btns button.primary{background:linear-gradient(135deg,var(--brand1),var(--brand3));color:#fff;border-color:transparent;box-shadow:0 8px 18px rgba(11,61,58,.3);}
+  .btns button.primary:hover{filter:brightness(1.07);}
+  #saveStatus{font-size:12px;color:var(--muted);margin:0 0 10px 2px;min-height:16px;}
+
+  .card{background:var(--card);border-radius:18px;padding:28px;box-shadow:0 16px 44px rgba(11,61,58,.10);}
+  #companyHeading{text-align:center;font-style:italic;font-weight:700;font-size:32px;margin:0 0 4px;outline:none;color:var(--brand1);}
+  #formTitle{text-align:center;text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:5px;
+    font-weight:700;font-size:16px;margin:0 0 18px;letter-spacing:1.5px;outline:none;color:#333;}
+  [contenteditable="true"]{cursor:text;border-bottom:1px dashed transparent;}
+  [contenteditable="true"]:hover,[contenteditable="true"]:focus{border-bottom:1px dashed var(--brand3);background:rgba(18,125,110,.06);}
+
+  .meta{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;margin-bottom:18px;font-size:13.5px;}
+  .meta label{font-weight:700;margin-right:6px;color:#333;}
+  .meta input{border:none;border-bottom:1.5px solid #b9c6c3;background:transparent;color:var(--ink);padding:5px 2px;min-width:110px;font-size:14px;font-family:inherit;}
+  .meta input:focus{outline:none;border-bottom-color:var(--brand3);}
+
+  .tableScroll{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #dde5e3;border-radius:12px;max-height:50vh;}
+  table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;}
+  th,td{border-right:1px solid #e3e9e7;border-bottom:1px solid #e3e9e7;padding:10px 9px;text-align:center;font-size:13px;white-space:nowrap;}
+  thead th{font-weight:700;background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#fff;position:sticky;top:0;z-index:2;border-color:#0a332f;}
+  thead th:first-child{left:0;z-index:4;}
+  td.brand, thead th:first-child{position:sticky;left:0;background:#fff;z-index:1;box-shadow:2px 0 0 #e3e9e7;}
+  thead th:first-child{background:linear-gradient(135deg,var(--brand1),var(--brand2));}
+  th:first-child, td:first-child{border-left:1px solid #e3e9e7;}
+  .thInner{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;}
+  .thLabel{outline:none;display:inline-block;min-width:12px;color:#fff;}
+  .thInner button{border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.14);color:#fff;border-radius:6px;font-size:10.5px;padding:3px 7px;cursor:pointer;line-height:1.4;}
+  .thInner button:hover{background:rgba(255,255,255,.3);}
+
+  tbody tr:nth-child(even) td:not(.brand):not(.readonly){background:#f6faf9;}
+  tbody tr:hover td{background:#eef8f6;}
+  tbody tr:hover td.brand{background:#eef8f6;}
+
+  td input{border:none;background:transparent;color:var(--ink);text-align:center;font-size:14px;padding:6px 4px;
+    width:100%;min-width:70px;-moz-appearance:textfield;font-family:inherit;}
+  td input::-webkit-outer-spin-button, td input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  td.brand{text-align:left;white-space:normal;min-width:140px;}
+  td.brand input{text-align:left;min-width:120px;}
+  td.readonly{background:#eaf6f3;font-weight:700;color:var(--brand1);}
+  .rowdel{cursor:pointer;color:var(--danger);font-weight:bold;font-size:16px;padding:6px 10px;}
+  .rowdel:hover{background:#fdecea;}
+
+  tr.grandRow td{font-weight:800;background:linear-gradient(135deg,#dff2ee,#e8f6d9);color:var(--brand1);position:sticky;bottom:0;z-index:1;}
+  tr.grandRow td.brand{position:sticky;left:0;bottom:0;z-index:2;box-shadow:2px 0 0 #e3e9e7;}
+
+  .addrow{margin-top:14px;padding:10px 18px;border-radius:10px;border:1.5px solid #e1e7e5;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;transition:.15s;font-family:inherit;}
+  .addrow:hover{background:#f2f8f6;}
+  .sig{margin-top:50px;font-size:14px;}
+  .sig .line{display:inline-block;border-bottom:1px solid var(--ink);width:240px;margin-left:8px;}
+
+  .history{margin-top:16px;font-size:13px;}
+  .history b{font-size:14px;}
+  .history ul{list-style:none;padding:0;margin:8px 0;}
+  .history li{padding:0;border:1px solid #e3e9e7;border-radius:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:stretch;background:#fff;overflow:hidden;box-shadow:0 3px 10px rgba(11,61,58,.06);}
+  .history li .liMain{flex:1;padding:13px 15px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .history li .liMain:hover{background:#f2f8f6;}
+  .history li .liDate{color:var(--muted);font-size:12px;}
+  .history li .liDel{border:none;background:#fdecea;color:var(--danger);padding:0 18px;cursor:pointer;font-weight:700;font-family:inherit;}
+  .history li .liDel:hover{background:#f9d7d3;}
+
+  @media (max-width:720px){
+    .wrap{padding:12px 8px 60px;}
+    .card{padding:16px 12px;}
+    #companyHeading{font-size:23px;}
+    .meta{flex-direction:column;gap:10px;}
+  }
+
+  /* ================= PRINT ================= */
+  @media print{
+    #authScreen, #modalOverlay, .topbar, #saveStatus, .history, .addrow, .thInner button, .rowdel, .delcol{display:none !important;}
+    html,body{background:#fff !important;}
+    .wrap{padding:0 !important;max-width:100% !important;}
+    .card{box-shadow:none !important;border:none !important;border-radius:0 !important;padding:0 !important;}
+    [contenteditable="true"]{border-bottom:none !important;background:none !important;}
+    .tableScroll{overflow:visible !important;max-height:none !important;border:none !important;border-radius:0 !important;}
+    table{width:100% !important;}
+    tr{page-break-inside:avoid;break-inside:avoid;}
+    thead{display:table-header-group;}
+    td,th{box-shadow:none !important;position:static !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    thead th{background:var(--brand1) !important;color:#fff !important;}
+    tr.grandRow td{background:#dff2ee !important;}
+    @page{ margin:14mm; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="authScreen">
+  <div class="authCard">
+    <div class="authLogo">SE</div>
+    <h1 id="authHeading">Welcome back</h1>
+    <p class="sub" id="authSub">Sign in to your Order Advice account</p>
+
+    <div class="authTabs" id="authTabs">
+      <button id="tabSignIn" class="active">Sign In</button>
+      <button id="tabRegister">Register</button>
+    </div>
+
+    <div id="viewSignInRegister">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Full name</label>
+        <input id="regName" type="text" placeholder="e.g. Abbas Khan">
+      </div>
+      <div class="field">
+        <label>Work email</label>
+        <input id="authEmail" type="email" placeholder="you@company.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="authPass" type="password" placeholder="••••••••">
+      </div>
+      <button class="authBtn" id="authSubmit">Sign In</button>
+      <div class="authLinks">
+        <a id="forgotLink">Forgot password?</a>
+        <span></span>
+      </div>
+    </div>
+
+    <div id="viewForgot" class="hide">
+      <span class="backLink" id="backFromForgot">&larr; Back to sign in</span>
+      <div class="field">
+        <label>Work email</label>
+        <input id="forgotEmail" type="email" placeholder="you@company.com">
+      </div>
+      <button class="authBtn" id="forgotSubmit">Send reset link</button>
+    </div>
+
+    <div id="viewReset" class="hide">
+      <p class="sub" style="margin-bottom:16px;">Choose a new password for your account.</p>
+      <div class="field">
+        <label>New password</label>
+        <input id="newPass1" type="password" placeholder="New password">
+      </div>
+      <div class="field">
+        <label>Confirm new password</label>
+        <input id="newPass2" type="password" placeholder="Confirm new password">
+      </div>
+      <button class="authBtn" id="resetSubmit">Update password</button>
+    </div>
+
+    <div id="authMsg" class="authMsg"></div>
+  </div>
+</div>
+
+<!-- ================= CUSTOM MODAL ================= -->
+<div id="modalOverlay" class="modalOverlay hide">
+  <div class="modalCard">
+    <h3 id="modalTitle">Are you sure?</h3>
+    <p id="modalMsg"></p>
+    <div class="modalBtns">
+      <button id="modalCancel" class="modalBtn">Cancel</button>
+      <button id="modalConfirm" class="modalBtn primary">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="wrap hide" id="app">
+  <div class="topbar">
+    <div class="brandMark">
+      <div class="logo">SE</div>
+      <div class="who">Order Advice<br><b id="whoBox"></b></div>
+    </div>
+    <div class="btns">
+      <button id="newBtn">＋ New</button>
+      <button id="historyBtn">🗂 My Orders</button>
+      <button id="pdfBtn" class="primary">🖨 Print</button>
+      <button id="signOutBtn">Sign out</button>
+    </div>
+  </div>
+  <div id="saveStatus">&nbsp;</div>
+
+  <div class="card" id="printArea">
+    <h1 id="companyHeading" contenteditable="true" spellcheck="false">Sayyed Engineers Limited</h1>
+    <h2 id="formTitle" contenteditable="true" spellcheck="false">ORDER ADVICE</h2>
+    <div class="meta">
+      <div><label>Dealer Code:</label><input id="dealerCode"></div>
+      <div><label>Dealer Name:</label><input id="dealerName" style="min-width:200px;"></div>
+      <div><label>Date:</label><input id="orderDate" type="date"></div>
+    </div>
+
+    <div class="tableScroll">
+      <table id="orderTable">
+        <thead><tr id="headRow"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <button class="addrow" id="addRowBtn">+ Add Row</button>
+
+    <div class="sig">Signature <span class="line"></span></div>
+  </div>
+
+  <div class="history" id="historyPanel" style="display:none;">
+    <b>Saved Orders</b>
+    <ul id="historyList"></ul>
+  </div>
+</div>
+
+<script>
+/* ====== CONFIGURE THESE TWO VALUES (Supabase: Project Settings > API) ====== */
+const SUPABASE_URL = "https://qmerdptnrmvhrqvcplzt.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ieRDZIDhDgWIA55LBKRKrw_qHUX0nRs";
+/* ============================================================================ */
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const DEFAULT_LABELS = {
+  brand:'BRANDS', price:'TRADE PRICE', blue:'BLUE', black:'BLACK', red:'RED',
+  green:'GREEN', total:'TOTAL', discount:'DISCOUNT %', charges:'CARTON PER CHARGES', amount:'AMOUNT'
+};
+const COLS = [
+  {key:'brand',   type:'text', class:'brand'},
+  {key:'price',   type:'num'},
+  {key:'blue',    type:'num'},
+  {key:'black',   type:'num'},
+  {key:'red',     type:'num'},
+  {key:'green',   type:'num'},
+  {key:'total',   type:'computed'},
+  {key:'discount',type:'num'},
+  {key:'charges', type:'num'},
+  {key:'amount',  type:'computed'}
+];
+const SUMMABLE = ['blue','black','red','green','total','charges','amount'];
+
+let columnLabels = {...DEFAULT_LABELS};
+let currentOrderId = null;
+let saveTimer = null, settingsTimer = null;
+
+const tbody = document.getElementById('tbody');
+const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+
+/* ================= CUSTOM MODAL ================= */
+let modalResolve = null;
+function openModal({title, message, confirmText='Confirm', cancelText='Cancel', danger=false, hideCancel=false}){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMsg').textContent = message || '';
+  const confirmBtn = document.getElementById('modalConfirm');
+  const cancelBtn = document.getElementById('modalCancel');
+  confirmBtn.textContent = confirmText;
+  confirmBtn.className = 'modalBtn primary' + (danger ? ' danger' : '');
+  cancelBtn.textContent = cancelText;
+  cancelBtn.style.display = hideCancel ? 'none' : 'inline-block';
+  document.getElementById('modalOverlay').classList.remove('hide');
+  return new Promise(resolve => { modalResolve = resolve; });
+}
+document.getElementById('modalConfirm').onclick = ()=>{ document.getElementById('modalOverlay').classList.add('hide'); modalResolve && modalResolve(true); };
+document.getElementById('modalCancel').onclick = ()=>{ document.getElementById('modalOverlay').classList.add('hide'); modalResolve && modalResolve(false); };
+
+/* ================= HEADER ================= */
+function buildHeader(){
+  const headRow = document.getElementById('headRow');
+  headRow.innerHTML = '';
+  COLS.forEach(col=>{
+    const th = document.createElement('th');
+    if (col.class) th.className = col.class;
+    const inner = document.createElement('div'); inner.className = 'thInner';
+    const span = document.createElement('span');
+    span.className = 'thLabel'; span.contentEditable = 'true'; span.spellcheck = false;
+    span.textContent = columnLabels[col.key] || DEFAULT_LABELS[col.key];
+    span.addEventListener('input', ()=>{
+      columnLabels[col.key] = span.textContent.trim() || DEFAULT_LABELS[col.key];
+      const brandCell = document.querySelector('tr.grandRow td.brand');
+      if (brandCell) brandCell.textContent = 'GRAND TOTAL';
+      queueSave(); queueSettingsSave();
+    });
+    inner.appendChild(span);
+    if (col.type !== 'computed'){
+      const copyBtn = document.createElement('button'); copyBtn.type='button'; copyBtn.title='Copy column'; copyBtn.textContent='⧉';
+      copyBtn.onclick = ()=>copyColumn(col.key);
+      const pasteBtn = document.createElement('button'); pasteBtn.type='button'; pasteBtn.title='Paste column'; pasteBtn.textContent='⇩';
+      pasteBtn.onclick = ()=>pasteColumn(col.key);
+      inner.appendChild(copyBtn); inner.appendChild(pasteBtn);
+    }
+    th.appendChild(inner);
+    headRow.appendChild(th);
+  });
+  const delTh = document.createElement('th');
+  delTh.className = 'delcol';
+  headRow.appendChild(delTh);
+}
+
+/* ================= ROWS (grand total lives as the last <tr> in tbody, not a repeating <tfoot>) ================= */
+function sanitizeNumeric(str){
+  let s = (str||'').replace(/[^0-9.]/g,'');
+  const parts = s.split('.');
+  if (parts.length>2) s = parts[0]+'.'+parts.slice(1).join('');
+  return s;
+}
+
+function newRow(data = {}){
+  const tr = document.createElement('tr');
+  COLS.forEach(col=>{
+    const td = document.createElement('td');
+    td.setAttribute('data-f', col.key);
+    if (col.class) td.className = col.class;
+    if (col.type === 'computed'){
+      td.className = (td.className? td.className+' ':'') + 'readonly';
+      td.textContent = '0';
+    } else {
+      const inp = document.createElement('input');
+      inp.setAttribute('data-f', col.key);
+      inp.type='text';
+      if (col.type === 'num') inp.inputMode='decimal';
+      inp.value = (data[col.key] === undefined || data[col.key] === null) ? '' : String(data[col.key]);
+      td.appendChild(inp);
+    }
+    tr.appendChild(td);
+  });
+  const delTd = document.createElement('td');
+  delTd.className='rowdel'; delTd.title='Delete row'; delTd.textContent='✕';
+  tr.appendChild(delTd);
+
+  const grand = tbody.querySelector('tr.grandRow');
+  if (grand) tbody.insertBefore(tr, grand); else tbody.appendChild(tr);
+  recalcRow(tr);
+  return tr;
+}
+
+function fieldInput(tr,f){ return tr.querySelector(`input[data-f="${f}"]`); }
+function cellFor(tr,f){ return tr.querySelector(`td[data-f="${f}"]`); }
+
+function recalcRow(tr){
+  const val = f => num(fieldInput(tr,f)?.value);
+  const total = val('blue')+val('black')+val('red')+val('green');
+  const price = val('price'), discount = val('discount'), charges = val('charges');
+  let amount = total*price;
+  amount -= amount*discount/100;
+  amount -= charges;
+  if (amount<0) amount=0;
+  cellFor(tr,'total').textContent = total;
+  cellFor(tr,'amount').textContent = amount.toFixed(2);
+  recalcGrandTotal();
+}
+
+function ensureGrandRow(){
+  let grand = tbody.querySelector('tr.grandRow');
+  if (grand) return grand;
+  const tr = document.createElement('tr'); tr.className='grandRow';
+  COLS.forEach(col=>{
+    const td = document.createElement('td');
+    td.setAttribute('data-f', col.key);
+    if (col.class) td.className = (td.className? td.className+' ':'')+col.class;
+    if (col.key==='brand') td.textContent = 'GRAND TOTAL';
+    else if (!SUMMABLE.includes(col.key)) td.textContent = '—';
+    else td.textContent = '0';
+    tr.appendChild(td);
+  });
+  const spacer = document.createElement('td'); spacer.className='delcol';
+  tr.appendChild(spacer);
+  tbody.appendChild(tr);
+  return tr;
+}
+
+function recalcGrandTotal(){
+  const grand = ensureGrandRow();
+  const sums = {}; SUMMABLE.forEach(k=>sums[k]=0);
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    if (tr.classList.contains('grandRow')) return;
+    sums.blue += num(fieldInput(tr,'blue')?.value);
+    sums.black += num(fieldInput(tr,'black')?.value);
+    sums.red += num(fieldInput(tr,'red')?.value);
+    sums.green += num(fieldInput(tr,'green')?.value);
+    sums.total += num(cellFor(tr,'total').textContent);
+    sums.charges += num(fieldInput(tr,'charges')?.value);
+    sums.amount += num(cellFor(tr,'amount').textContent);
+  });
+  SUMMABLE.forEach(k=>{
+    const cell = grand.querySelector(`td[data-f="${k}"]`);
+    if (cell) cell.textContent = sums[k].toFixed(k==='total'?0:2);
+  });
+}
+
+tbody.addEventListener('input', e=>{
+  const inp = e.target;
+  if (inp.tagName!=='INPUT') return;
+  const f = inp.getAttribute('data-f');
+  const col = COLS.find(c=>c.key===f);
+  if (col && col.type==='num'){
+    const clean = sanitizeNumeric(inp.value);
+    if (clean!==inp.value) inp.value = clean;
+  }
+  const tr = inp.closest('tr'); if (tr) recalcRow(tr);
+  queueSave();
+});
+tbody.addEventListener('click', e=>{
+  if (e.target.classList.contains('rowdel')){
+    e.target.closest('tr').remove();
+    recalcGrandTotal(); queueSave();
+  }
+});
+document.getElementById('addRowBtn').onclick = ()=>{ newRow(); queueSave(); };
+
+/* ---- Excel-style multi-cell paste ---- */
+tbody.addEventListener('paste', e=>{
+  const target = e.target;
+  if (target.tagName!=='INPUT') return;
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if (!text.includes('\t') && !text.includes('\n')) return;
+  e.preventDefault();
+  const grid = text.replace(/\r/g,'').split('\n').filter(l=>l.length).map(l=>l.split('\t'));
+  const startField = target.getAttribute('data-f');
+  const editableKeys = COLS.filter(c=>c.type!=='computed').map(c=>c.key);
+  const startColIdx = editableKeys.indexOf(startField);
+  let trs = [...tbody.querySelectorAll('tr:not(.grandRow)')];
+  const startRowIdx = trs.indexOf(target.closest('tr'));
+  grid.forEach((rowVals, ri)=>{
+    let tr = trs[startRowIdx+ri];
+    if (!tr){ tr = newRow(); trs = [...tbody.querySelectorAll('tr:not(.grandRow)')]; }
+    rowVals.forEach((v, ci)=>{
+      const key = editableKeys[startColIdx+ci];
+      if (!key) return;
+      const inp = fieldInput(tr,key);
+      if (inp){
+        const col = COLS.find(c=>c.key===key);
+        inp.value = col.type==='num' ? sanitizeNumeric(v.trim()) : v.trim();
+      }
+    });
+    recalcRow(tr);
+  });
+  queueSave();
+});
+
+function copyColumn(key){
+  const vals = [...tbody.querySelectorAll('tr:not(.grandRow)')].map(tr=>fieldInput(tr,key)?.value || '');
+  navigator.clipboard.writeText(vals.join('\n')).then(()=>flashStatus('Column copied ✓'));
+}
+async function pasteColumn(key){
+  try{
+    const text = await navigator.clipboard.readText();
+    const vals = text.replace(/\r/g,'').split('\n');
+    let trs = [...tbody.querySelectorAll('tr:not(.grandRow)')];
+    vals.forEach((v,i)=>{
+      let tr = trs[i];
+      if (!tr){ tr = newRow(); trs = [...tbody.querySelectorAll('tr:not(.grandRow)')]; }
+      const inp = fieldInput(tr,key);
+      const col = COLS.find(c=>c.key===key);
+      if (inp){ inp.value = col.type==='num'? sanitizeNumeric(v.trim()) : v.trim(); }
+      recalcRow(tr);
+    });
+    queueSave(); flashStatus('Column pasted ✓');
+  }catch(err){ flashStatus('Clipboard access blocked by browser'); }
+}
+function flashStatus(msg){
+  const el = document.getElementById('saveStatus');
+  const prev = el.textContent; el.textContent = msg;
+  setTimeout(()=>{ if (el.textContent===msg) el.textContent = prev; }, 1800);
+}
+
+['dealerCode','dealerName','orderDate'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', queueSave);
+});
+['companyHeading','formTitle'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{ queueSave(); queueSettingsSave(); });
+});
+
+/* ================= AUTOSAVE + "stay where I left off" ================= */
+function queueSave(){
+  document.getElementById('saveStatus').textContent = 'Saving…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doSave, 700);
+}
+function queueSettingsSave(){
+  clearTimeout(settingsTimer);
+  settingsTimer = setTimeout(()=>saveSettings({}), 900);
+}
+
+function collectOrder(){
+  const rows = [...tbody.querySelectorAll('tr:not(.grandRow)')].map(tr=>{
+    const v = f => fieldInput(tr,f)?.value ?? '';
+    return {
+      brand:v('brand'), price:v('price'), blue:v('blue'), black:v('black'),
+      red:v('red'), green:v('green'), discount:v('discount'), charges:v('charges')
+    };
+  });
+  return {
+    company_heading: document.getElementById('companyHeading').textContent.trim(),
+    form_title: document.getElementById('formTitle').textContent.trim(),
+    column_labels: columnLabels,
+    dealer_code: document.getElementById('dealerCode').value,
+    dealer_name: document.getElementById('dealerName').value,
+    order_date: document.getElementById('orderDate').value || null,
+    rows
+  };
+}
+
+async function doSave(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if (!user) return;
+  const payload = collectOrder();
+  payload.user_id = user.id;
+  if (!currentOrderId){
+    const { data, error } = await sb.from('orders').insert(payload).select().single();
+    if (error){ document.getElementById('saveStatus').textContent='Save failed'; console.error(error); return; }
+    currentOrderId = data.id;
+    await saveSettings({ last_order_id: currentOrderId });
+  } else {
+    const { error } = await sb.from('orders').update(payload).eq('id', currentOrderId);
+    if (error){ document.getElementById('saveStatus').textContent='Save failed'; console.error(error); return; }
+  }
+  document.getElementById('saveStatus').textContent = 'Saved ✓ ' + new Date().toLocaleTimeString();
+}
+
+async function saveSettings(extra){
+  const { data:{ user } } = await sb.auth.getUser();
+  if (!user) return;
+  await sb.from('user_settings').upsert({
+    user_id: user.id,
+    company_heading: document.getElementById('companyHeading').textContent.trim(),
+    form_title: document.getElementById('formTitle').textContent.trim(),
+    column_labels: columnLabels,
+    ...extra
+  });
+}
+
+/* ================= LOAD / NEW ================= */
+function loadOrder(o){
+  currentOrderId = o.id;
+  columnLabels = {...DEFAULT_LABELS, ...(o.column_labels||{})};
+  buildHeader();
+  document.getElementById('companyHeading').textContent = o.company_heading || 'Sayyed Engineers Limited';
+  document.getElementById('formTitle').textContent = o.form_title || 'ORDER ADVICE';
+  document.getElementById('dealerCode').value = o.dealer_code || '';
+  document.getElementById('dealerName').value = o.dealer_name || '';
+  document.getElementById('orderDate').value = o.order_date || '';
+  tbody.innerHTML = '';
+  (o.rows||[]).forEach(r=>newRow(r));
+  if (!o.rows || !o.rows.length) newRow();
+  document.getElementById('saveStatus').textContent = '\u00A0';
+}
+
+async function blankForm(clearLast){
+  currentOrderId = null;
+  columnLabels = {...DEFAULT_LABELS};
+  buildHeader();
+  document.getElementById('companyHeading').textContent = 'Sayyed Engineers Limited';
+  document.getElementById('formTitle').textContent = 'ORDER ADVICE';
+  document.getElementById('dealerCode').value = '';
+  document.getElementById('dealerName').value = '';
+  document.getElementById('orderDate').valueAsDate = new Date();
+  tbody.innerHTML = '';
+  for (let i=0;i<5;i++) newRow();
+  document.getElementById('saveStatus').textContent = '\u00A0';
+  if (clearLast) await saveSettings({ last_order_id: null });
+}
+
+document.getElementById('newBtn').onclick = async ()=>{
+  const ok = await openModal({ title:'Start a new order?', message:'This opens a fresh blank Order Advice. Your current order has already been saved and stays in My Orders.', confirmText:'Start New' });
+  if (ok) blankForm(true);
+};
+
+document.getElementById('historyBtn').onclick = async ()=>{
+  const panel = document.getElementById('historyPanel');
+  panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+  if (panel.style.display==='none') return;
+  await refreshHistoryList();
+};
+
+async function refreshHistoryList(){
+  const list = document.getElementById('historyList');
+  list.innerHTML = 'Loading…';
+  const { data, error } = await sb.from('orders').select('*').order('updated_at',{ascending:false}).limit(100);
+  if (error || !data || !data.length){ list.innerHTML='<li style="border:none;box-shadow:none;"><span style="padding:10px;">No saved orders yet.</span></li>'; return; }
+  list.innerHTML='';
+  data.forEach(o=>{
+    const li = document.createElement('li');
+    const main = document.createElement('div'); main.className='liMain';
+    main.innerHTML = `<span>${o.dealer_name || '(no dealer name)'} — ${o.order_date||''}</span><span class="liDate">${new Date(o.updated_at).toLocaleString()}</span>`;
+    main.onclick = async ()=>{ loadOrder(o); document.getElementById('historyPanel').style.display='none'; await saveSettings({ last_order_id: o.id }); };
+    const delBtn = document.createElement('button'); delBtn.className='liDel'; delBtn.textContent='Remove'; delBtn.type='button';
+    delBtn.onclick = async (e)=>{
+      e.stopPropagation();
+      const ok = await openModal({ title:'Delete this order?', message:`This permanently deletes the order for "${o.dealer_name||'(no dealer name)'}". This can't be undone.`, confirmText:'Delete', danger:true });
+      if (!ok) return;
+      const { error } = await sb.from('orders').delete().eq('id', o.id);
+      if (error){ await openModal({ title:'Could not delete', message:error.message, hideCancel:true, confirmText:'OK' }); return; }
+      if (currentOrderId === o.id){ await blankForm(true); }
+      await refreshHistoryList();
+    };
+    li.appendChild(main); li.appendChild(delBtn);
+    list.appendChild(li);
+  });
+}
+
+/* ================= PRINT (native browser print — repeats the header row on every page automatically) ================= */
+document.getElementById('pdfBtn').onclick = ()=>{
+  const dealer = document.getElementById('dealerName').value || 'Order';
+  const date = document.getElementById('orderDate').value || '';
+  const prevTitle = document.title;
+  document.title = `Order Advice - ${dealer}${date ? ' - '+date : ''}`;
+  window.print();
+  setTimeout(()=>{ document.title = prevTitle; }, 1000);
+};
+
+/* ================= AUTH ================= */
+let authView = 'signin';
+
+function setAuthView(v){
+  authView = v;
+  document.getElementById('viewSignInRegister').classList.toggle('hide', !(v==='signin'||v==='register'));
+  document.getElementById('viewForgot').classList.toggle('hide', v!=='forgot');
+  document.getElementById('viewReset').classList.toggle('hide', v!=='reset');
+  document.getElementById('nameField').style.display = v==='register' ? 'block' : 'none';
+  document.getElementById('authTabs').classList.toggle('hide', v==='forgot'||v==='reset');
+  document.getElementById('authSubmit').textContent = v==='register' ? 'Create account' : 'Sign In';
+  document.getElementById('tabSignIn').classList.toggle('active', v==='signin');
+  document.getElementById('tabRegister').classList.toggle('active', v==='register');
+  document.getElementById('authHeading').textContent =
+    v==='register' ? 'Create your account' : v==='forgot' ? 'Reset your password' : v==='reset' ? 'New password' : 'Welcome back';
+  document.getElementById('authSub').textContent =
+    v==='register' ? 'Set up your Order Advice account' :
+    v==='forgot' ? 'We\u2019ll email you a reset link' :
+    v==='reset' ? 'You\u2019re verified — set a new password' :
+    'Sign in to your Order Advice account';
+  setAuthMsg('');
+}
+function setAuthMsg(text, kind){
+  const el = document.getElementById('authMsg');
+  el.textContent = text || '';
+  el.className = 'authMsg' + (kind ? ' '+kind : '');
+}
+
+document.getElementById('tabSignIn').onclick = ()=>setAuthView('signin');
+document.getElementById('tabRegister').onclick = ()=>setAuthView('register');
+document.getElementById('forgotLink').onclick = ()=>setAuthView('forgot');
+document.getElementById('backFromForgot').onclick = ()=>setAuthView('signin');
+
+document.getElementById('authSubmit').onclick = async ()=>{
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPass').value;
+  if (!email || !password){ setAuthMsg('Enter your email and password.','err'); return; }
+  const btn = document.getElementById('authSubmit'); btn.disabled = true;
+  try{
+    if (authView === 'register'){
+      const name = document.getElementById('regName').value.trim();
+      const { error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name } } });
+      if (error){ setAuthMsg(error.message,'err'); return; }
+      setAuthMsg('Account created. Check your email to confirm, then sign in.','ok');
+      setAuthView('signin');
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error){ setAuthMsg(error.message,'err'); return; }
+    }
+  } finally { btn.disabled = false; }
+};
+
+document.getElementById('forgotSubmit').onclick = async ()=>{
+  const email = document.getElementById('forgotEmail').value.trim();
+  if (!email){ setAuthMsg('Enter your email.','err'); return; }
+  const btn = document.getElementById('forgotSubmit'); btn.disabled = true;
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  btn.disabled = false;
+  if (error){ setAuthMsg(error.message,'err'); return; }
+  setAuthMsg('Reset link sent. Check your inbox.','ok');
+};
+
+document.getElementById('resetSubmit').onclick = async ()=>{
+  const p1 = document.getElementById('newPass1').value;
+  const p2 = document.getElementById('newPass2').value;
+  if (!p1 || p1.length<6){ setAuthMsg('Password must be at least 6 characters.','err'); return; }
+  if (p1!==p2){ setAuthMsg('Passwords do not match.','err'); return; }
+  const btn = document.getElementById('resetSubmit'); btn.disabled = true;
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  btn.disabled = false;
+  if (error){ setAuthMsg(error.message,'err'); return; }
+  setAuthMsg('Password updated. You can sign in now.','ok');
+  await sb.auth.signOut();
+  setAuthView('signin');
+};
+
+document.getElementById('signOutBtn').onclick = async ()=>{ await sb.auth.signOut(); };
+
+async function showApp(user){
+  document.getElementById('authScreen').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('whoBox').textContent = user.email;
+
+  const { data: settings } = await sb.from('user_settings').select('*').eq('user_id', user.id).maybeSingle();
+  if (settings && settings.last_order_id){
+    const { data: order } = await sb.from('orders').select('*').eq('id', settings.last_order_id).maybeSingle();
+    if (order){ loadOrder(order); return; }
+  }
+  columnLabels = {...DEFAULT_LABELS, ...(settings?.column_labels||{})};
+  buildHeader();
+  document.getElementById('companyHeading').textContent = settings?.company_heading || 'Sayyed Engineers Limited';
+  document.getElementById('formTitle').textContent = settings?.form_title || 'ORDER ADVICE';
+  document.getElementById('dealerCode').value = '';
+  document.getElementById('dealerName').value = '';
+  document.getElementById('orderDate').valueAsDate = new Date();
+  tbody.innerHTML = '';
+  for (let i=0;i<5;i++) newRow();
+  document.getElementById('saveStatus').textContent = '\u00A0';
+}
+function showAuth(){
+  document.getElementById('authScreen').classList.remove('hide');
+  document.getElementById('app').classList.add('hide');
+  setAuthView('signin');
+}
+
+sb.auth.onAuthStateChange((event, session)=>{
+  if (event === 'PASSWORD_RECOVERY'){
+    document.getElementById('authScreen').classList.remove('hide');
+    document.getElementById('app').classList.add('hide');
+    setAuthView('reset');
+    return;
+  }
+  if (session && session.user) showApp(session.user);
+  else showAuth();
+});
+
+(async ()=>{
+  const { data:{ session } } = await sb.auth.getSession();
+  if (session && session.user) showApp(session.user);
+  else showAuth();
+})();
+</script>
+</body>
+</html>
