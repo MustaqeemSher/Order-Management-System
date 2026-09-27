@@ -15,7 +15,7 @@
     --danger:#c0392b; --ok:#0a7a3d;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;color:var(--ink);}
+  html,body{margin:0;color:var(--ink);overflow-x:hidden;}
   body{
     font-family:'Inter',Arial,Helvetica,sans-serif;
     min-height:100vh;
@@ -64,7 +64,7 @@
   .modalBtn.danger{background:linear-gradient(135deg,#8f271d,var(--danger));color:#fff;border:none;}
 
   /* ================= APP SHELL ================= */
-  .wrap{max-width:1220px;margin:0 auto;padding:18px 14px 60px;}
+  .wrap{max-width:1220px;margin:0 auto;padding:18px 14px 60px;width:100%;}
   .topbar{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:14px;
     background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 6px 22px rgba(11,61,58,.10);flex-wrap:wrap;}
   .brandMark{display:flex;align-items:center;gap:10px;}
@@ -80,46 +80,149 @@
   .btns button.primary:hover{filter:brightness(1.07);}
   #saveStatus{font-size:12px;color:var(--muted);margin:0 0 10px 2px;min-height:16px;}
 
-  .card{background:var(--card);border-radius:18px;padding:28px;box-shadow:0 16px 44px rgba(11,61,58,.10);}
+  .card{background:var(--card);border-radius:18px;padding:28px;box-shadow:0 16px 44px rgba(11,61,58,.10);max-width:100%;overflow:hidden;}
   #companyHeading{text-align:center;font-style:italic;font-weight:700;font-size:32px;margin:0 0 4px;outline:none;color:var(--brand1);}
   #formTitle{text-align:center;text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:5px;
     font-weight:700;font-size:16px;margin:0 0 18px;letter-spacing:1.5px;outline:none;color:#333;}
   [contenteditable="true"]{cursor:text;border-bottom:1px dashed transparent;}
   [contenteditable="true"]:hover,[contenteditable="true"]:focus{border-bottom:1px dashed var(--brand3);background:rgba(18,125,110,.06);}
 
+  /* FIXED META SECTION TO PREVENT OVERFLOW */
   .meta{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;margin-bottom:18px;font-size:13.5px;}
-  .meta label{font-weight:700;margin-right:6px;color:#333;}
-  .meta input{border:none;border-bottom:1.5px solid #b9c6c3;background:transparent;color:var(--ink);padding:5px 2px;min-width:110px;font-size:14px;font-family:inherit;}
+  .meta > div{display:flex;align-items:center;max-width:100%;}
+  .meta label{font-weight:700;margin-right:6px;color:#333;white-space:nowrap;}
+  .meta input{border:none;border-bottom:1.5px solid #b9c6c3;background:transparent;color:var(--ink);padding:5px 2px;min-width:80px;max-width:100%;font-size:14px;font-family:inherit;}
   .meta input:focus{outline:none;border-bottom-color:var(--brand3);}
+  
+  .dateWrapper{position:relative;display:inline-block;}
+  .dateDisplay{border-bottom:1.5px solid #b9c6c3;padding:5px 4px;font-size:14px;color:var(--ink);cursor:pointer;display:inline-block;white-space:nowrap;}
+  .dateDisplay:hover{border-bottom-color:var(--brand3);background:rgba(18,125,110,.06);}
+  
+  .datePickerFix{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
 
-  .tableScroll{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #dde5e3;border-radius:12px;max-height:50vh;}
-  table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto;}
-  th,td{border-right:1px solid #e3e9e7;border-bottom:1px solid #e3e9e7;padding:10px 9px;text-align:center;font-size:13px;white-space:nowrap;}
-  thead th{font-weight:700;background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#fff;position:sticky;top:0;z-index:2;border-color:#0a332f;}
-  thead th:first-child{left:0;z-index:4;}
-  td.brand, thead th:first-child{position:sticky;left:0;background:#fff;z-index:1;box-shadow:2px 0 0 #e3e9e7;}
-  thead th:first-child{background:linear-gradient(135deg,var(--brand1),var(--brand2));}
+  /* HORIZONTAL SCROLL CONTAINMENT */
+  .tableScroll{
+    width: 100%;
+    overflow-x: auto !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #dde5e3;
+    border-radius: 12px;
+    max-height: 50vh;
+    position: relative;
+  }
+  
+  table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content;min-width:100%;}
+  th,td{
+    border-right:1px solid #e3e9e7;
+    border-bottom:1px solid #e3e9e7;
+    padding:8px 6px;
+    text-align:center;
+    font-size:13px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  thead th{
+    font-weight:700;
+    background:linear-gradient(135deg,var(--brand1),var(--brand2));
+    color:#fff;
+    position:sticky;
+    top:0;
+    z-index:3;
+    border-color:#0a332f;
+    vertical-align:middle;
+  }
+  thead th:first-child{
+    position:sticky;
+    left:0;
+    top:0;
+    z-index:5;
+    background:linear-gradient(135deg,var(--brand1),var(--brand2));
+    box-shadow:2px 0 0 #e3e9e7;
+  }
+  td.brand{
+    position:sticky;
+    left:0;
+    background:#fff;
+    z-index:2;
+    box-shadow:2px 0 0 #e3e9e7;
+    text-align:left;
+  }
   th:first-child, td:first-child{border-left:1px solid #e3e9e7;}
-  .thInner{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;}
-  .thLabel{outline:none;display:inline-block;min-width:12px;color:#fff;}
-  .thInner button{border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.14);color:#fff;border-radius:6px;font-size:10.5px;padding:3px 7px;cursor:pointer;line-height:1.4;}
-  .thInner button:hover{background:rgba(255,255,255,.3);}
+  
+  /* HEADER FLEX & ACTION BUTTON FIX */
+  .thInner{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:4px 2px;
+  }
+  .thLabel{
+    outline:none;
+    display:inline-block;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    line-height:1.2;
+    text-align:center;
+    word-break:break-word;
+    white-space:normal;
+  }
+  .thBtns{
+    display:flex;
+    gap:3px;
+    align-items:center;
+  }
+  .thBtns button{
+    border:1px solid rgba(255,255,255,.5);
+    background:rgba(255,255,255,.18);
+    color:#fff;
+    border-radius:4px;
+    font-size:10px;
+    padding:2px 5px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .thBtns button:hover{background:rgba(255,255,255,.35);}
 
   tbody tr:nth-child(even) td:not(.brand):not(.readonly){background:#f6faf9;}
   tbody tr:hover td{background:#eef8f6;}
   tbody tr:hover td.brand{background:#eef8f6;}
 
-  td input{border:none;background:transparent;color:var(--ink);text-align:center;font-size:14px;padding:6px 4px;
-    width:100%;min-width:70px;-moz-appearance:textfield;font-family:inherit;}
+  td input{
+    border:none;
+    background:transparent;
+    color:var(--ink);
+    text-align:center;
+    font-size:13.5px;
+    padding:6px 2px;
+    width:100%;
+    -moz-appearance:textfield;
+    font-family:inherit;
+    text-overflow:ellipsis;
+  }
   td input::-webkit-outer-spin-button, td input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  td.brand{text-align:left;}
-  td.brand input{text-align:left;min-width:120px;}
+  .printText{display:block;padding:6px 4px;}
+  td.brand input{text-align:left;}
   td.readonly{background:#eaf6f3;font-weight:700;color:var(--brand1);}
   .rowdel{cursor:pointer;color:var(--danger);font-weight:bold;font-size:16px;padding:6px 10px;}
   .rowdel:hover{background:#fdecea;}
 
-  tr.grandRow td{font-weight:800;background:linear-gradient(135deg,#dff2ee,#e8f6d9);color:var(--brand1);position:sticky;bottom:0;z-index:1;}
-  tr.grandRow td.brand{position:sticky;left:0;bottom:0;z-index:2;box-shadow:2px 0 0 #e3e9e7;}
+  tr.grandRow td{font-weight:800;background:linear-gradient(135deg,#dff2ee,#e8f6d9);color:var(--brand1);position:sticky;bottom:0;z-index:3;}
+  tr.grandRow td.brand{position:sticky;left:0;bottom:0;z-index:4;box-shadow:2px 0 0 #e3e9e7;}
 
   .addrow{margin-top:14px;padding:10px 18px;border-radius:10px;border:1.5px solid #e1e7e5;background:#fff;cursor:pointer;font-size:13.5px;font-weight:600;transition:.15s;font-family:inherit;}
   .addrow:hover{background:#f2f8f6;}
@@ -138,26 +241,30 @@
 
   @media (max-width:720px){
     .wrap{padding:12px 8px 60px;}
-    .card{padding:16px 12px;}
+    .card{padding:16px 10px;}
     #companyHeading{font-size:23px;}
     .meta{flex-direction:column;gap:10px;}
+    .meta > div{width:100%;}
+    .meta input{flex:1;min-width:0;}
   }
 
   /* ================= PRINT ================= */
   @media print{
-    #authScreen, #modalOverlay, .topbar, #saveStatus, .history, .addrow, .thInner button, .rowdel, .delcol{display:none !important;}
-    html,body{background:#fff !important;}
+    #authScreen, #modalOverlay, .topbar, #saveStatus, .history, .addrow, .thBtns, .rowdel, .delcol{display:none !important;}
+    html,body{background:#fff !important;overflow:visible !important;}
     .wrap{padding:0 !important;max-width:100% !important;}
     .card{box-shadow:none !important;border:none !important;border-radius:0 !important;padding:0 !important;}
     [contenteditable="true"]{border-bottom:none !important;background:none !important;}
     .tableScroll{overflow:visible !important;max-height:none !important;border:none !important;border-radius:0 !important;}
-    table{width:100% !important;}
+    table{table-layout:auto !important;width:100% !important;}
+    col{width:auto !important;}
+    td,th{white-space:normal !important;overflow:visible !important;}
     tr{page-break-inside:avoid;break-inside:avoid;}
     thead{display:table-header-group;}
     td,th{box-shadow:none !important;position:static !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     thead th{background:var(--brand1) !important;color:#fff !important;}
     tr.grandRow td{background:#dff2ee !important;}
-    @page{ margin:14mm; }
+    @page{ size:landscape; margin:10mm; }
   }
 </style>
 </head>
@@ -167,8 +274,8 @@
 <div id="authScreen">
   <div class="authCard">
     <div class="authLogo">SE</div>
-    <h1 id="authHeading">Welcome back</h1>
-    <p class="sub" id="authSub">Sign in to your Order Advice account</p>
+    <h1 id="authHeading">Welcome Back</h1>
+    <p class="sub" id="authSub">Sign in to your Account</p>
 
     <div class="authTabs" id="authTabs">
       <button id="tabSignIn" class="active">Sign In</button>
@@ -254,8 +361,13 @@
     <h2 id="formTitle" contenteditable="true" spellcheck="false">ORDER ADVICE</h2>
     <div class="meta">
       <div><label>Dealer Code:</label><input id="dealerCode"></div>
-      <div><label>Dealer Name:</label><input id="dealerName" style="min-width:200px;"></div>
-      <div><label>Date:</label><input id="orderDate" type="date"></div>
+      <div><label>Dealer Name:</label><input id="dealerName"></div>
+      <div><label>Date:</label>
+        <div class="dateWrapper">
+          <span id="orderDateDisplay" class="dateDisplay" title="Click to change date">Select date</span>
+          <input id="orderDate" type="date" class="datePickerFix">
+        </div>
+      </div>
     </div>
 
     <div class="tableScroll">
@@ -266,8 +378,6 @@
       </table>
     </div>
     <button class="addrow" id="addRowBtn">+ Add Row</button>
-
-    <!-- <div class="sig">Signature <span class="line"></span></div> -->
   </div>
 
   <div class="history" id="historyPanel" style="display:none;">
@@ -277,10 +387,8 @@
 </div>
 
 <script>
-/* ====== CONFIGURE THESE TWO VALUES (Supabase: Project Settings > API) ====== */
 const SUPABASE_URL = "https://qmerdptnrmvhrqvcplzt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_ieRDZIDhDgWIA55LBKRKrw_qHUX0nRs";
-/* ============================================================================ */
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -289,16 +397,16 @@ const DEFAULT_LABELS = {
   green:'GREEN', total:'TOTAL', discount:'DISCOUNT %', charges:'CARTON PER CHARGES', amount:'AMOUNT'
 };
 const COLS = [
-  {key:'brand',   type:'text', class:'brand'},
-  {key:'price',   type:'num'},
-  {key:'blue',    type:'num'},
-  {key:'black',   type:'num'},
-  {key:'red',     type:'num'},
-  {key:'green',   type:'num'},
-  {key:'total',   type:'computed'},
-  {key:'discount',type:'num'},
-  {key:'charges', type:'num'},
-  {key:'amount',  type:'computed'}
+  {key:'brand',   type:'text', class:'brand', width: 170},
+  {key:'price',   type:'num',  width: 105},
+  {key:'blue',    type:'num',  width: 85},
+  {key:'black',   type:'num',  width: 85},
+  {key:'red',     type:'num',  width: 85},
+  {key:'green',   type:'num',  width: 85},
+  {key:'total',   type:'computed', width: 90},
+  {key:'discount',type:'num',  width: 105},
+  {key:'charges', type:'num',  width: 110},
+  {key:'amount',  type:'computed', width: 110}
 ];
 const SUMMABLE = ['blue','black','red','green','total','charges','amount'];
 
@@ -326,41 +434,29 @@ function openModal({title, message, confirmText='Confirm', cancelText='Cancel', 
 document.getElementById('modalConfirm').onclick = ()=>{ document.getElementById('modalOverlay').classList.add('hide'); modalResolve && modalResolve(true); };
 document.getElementById('modalCancel').onclick = ()=>{ document.getElementById('modalOverlay').classList.add('hide'); modalResolve && modalResolve(false); };
 
-/* ================= AUTO-FIT COLUMN WIDTHS (app + print both use the same <colgroup>) ================= */
-const measureCtx = document.createElement('canvas').getContext('2d');
-function textWidth(text, font){ measureCtx.font = font; return measureCtx.measureText(text || '').width; }
+/* ================= COLUMN MEASURE & FIT ================= */
 function buildColGroup(){
   const cg = document.getElementById('colGroup');
   cg.innerHTML = '';
+  let totalWidth = 0;
   COLS.forEach(col=>{
     const c = document.createElement('col');
     c.setAttribute('data-key', col.key);
+    c.style.width = col.width + 'px';
     cg.appendChild(c);
+    totalWidth += col.width;
   });
   const delCol = document.createElement('col');
   delCol.className = 'delcol';
-  delCol.style.width = '40px';
+  delCol.style.width = '35px';
   cg.appendChild(delCol);
-}
-function autofitColumn(key){
-  const col = COLS.find(c=>c.key===key);
-  const colEl = document.querySelector(`col[data-key="${key}"]`);
-  if (!col || !colEl) return;
-  const headerFont = '700 13px Inter, Arial, sans-serif';
-  const cellFont = '400 14px Inter, Arial, sans-serif';
-  const label = columnLabels[key] || DEFAULT_LABELS[key];
-  let max = textWidth(label, headerFont) + (col.type==='computed' ? 28 : 80); // room for header padding + copy/paste icons
-  tbody.querySelectorAll('tr').forEach(tr=>{
-    const text = col.type==='computed' ? (cellFor(tr,key)?.textContent || '') : (fieldInput(tr,key)?.value || '');
-    const w = textWidth(text, cellFont) + 28;
-    if (w > max) max = w;
-  });
-  const minW = key==='brand' ? 140 : (col.type==='computed' ? 80 : 70);
-  colEl.style.width = Math.max(minW, Math.ceil(max)) + 'px';
-}
-function autofitAll(){ COLS.forEach(c=>autofitColumn(c.key)); }
+  totalWidth += 35;
 
-/* ================= HEADER ================= */
+  const table = document.getElementById('orderTable');
+  if (table) table.style.width = totalWidth + 'px';
+}
+
+/* ================= HEADER BUILDER ================= */
 function buildHeader(){
   buildColGroup();
   const headRow = document.getElementById('headRow');
@@ -368,25 +464,44 @@ function buildHeader(){
   COLS.forEach(col=>{
     const th = document.createElement('th');
     if (col.class) th.className = col.class;
-    const inner = document.createElement('div'); inner.className = 'thInner';
+    
+    const inner = document.createElement('div'); 
+    inner.className = 'thInner';
+    
     const span = document.createElement('span');
-    span.className = 'thLabel'; span.contentEditable = 'true'; span.spellcheck = false;
+    span.className = 'thLabel'; 
+    span.contentEditable = 'true'; 
+    span.spellcheck = false;
     span.textContent = columnLabels[col.key] || DEFAULT_LABELS[col.key];
     span.addEventListener('input', ()=>{
       columnLabels[col.key] = span.textContent.trim() || DEFAULT_LABELS[col.key];
       const brandCell = document.querySelector('tr.grandRow td.brand');
       if (brandCell) brandCell.textContent = 'GRAND TOTAL';
-      autofitColumn(col.key);
       queueSave(); queueSettingsSave();
     });
     inner.appendChild(span);
+    
     if (col.type !== 'computed'){
-      const copyBtn = document.createElement('button'); copyBtn.type='button'; copyBtn.title='Copy column'; copyBtn.textContent='⧉';
+      const btnsDiv = document.createElement('div');
+      btnsDiv.className = 'thBtns';
+      
+      const copyBtn = document.createElement('button'); 
+      copyBtn.type = 'button'; 
+      copyBtn.title = 'Copy column'; 
+      copyBtn.textContent = '⧉';
       copyBtn.onclick = ()=>copyColumn(col.key);
-      const pasteBtn = document.createElement('button'); pasteBtn.type='button'; pasteBtn.title='Paste column'; pasteBtn.textContent='⇩';
+      
+      const pasteBtn = document.createElement('button'); 
+      pasteBtn.type = 'button'; 
+      pasteBtn.title = 'Paste column'; 
+      pasteBtn.textContent = '⇩';
       pasteBtn.onclick = ()=>pasteColumn(col.key);
-      inner.appendChild(copyBtn); inner.appendChild(pasteBtn);
+      
+      btnsDiv.appendChild(copyBtn); 
+      btnsDiv.appendChild(pasteBtn);
+      inner.appendChild(btnsDiv);
     }
+    
     th.appendChild(inner);
     headRow.appendChild(th);
   });
@@ -395,7 +510,7 @@ function buildHeader(){
   headRow.appendChild(delTh);
 }
 
-/* ================= ROWS (grand total lives as the last <tr> in tbody, not a repeating <tfoot>) ================= */
+/* ================= ROWS ================= */
 function sanitizeNumeric(str){
   let s = (str||'').replace(/[^0-9.]/g,'');
   const parts = s.split('.');
@@ -444,7 +559,7 @@ function recalcRow(tr){
   amount -= charges;
   if (amount<0) amount=0;
   cellFor(tr,'total').textContent = total;
-  cellFor(tr,'amount').textContent = amount.toFixed(2);
+  cellFor(tr,'amount').textContent = amount.toFixed(0);
   recalcGrandTotal();
 }
 
@@ -482,9 +597,8 @@ function recalcGrandTotal(){
   });
   SUMMABLE.forEach(k=>{
     const cell = grand.querySelector(`td[data-f="${k}"]`);
-    if (cell) cell.textContent = sums[k].toFixed(k==='total'?0:2);
+    if (cell) cell.textContent = sums[k].toFixed(0);
   });
-  autofitAll();
 }
 
 tbody.addEventListener('input', e=>{
@@ -507,7 +621,7 @@ tbody.addEventListener('click', e=>{
 });
 document.getElementById('addRowBtn').onclick = ()=>{ newRow(); queueSave(); };
 
-/* ---- Excel-style multi-cell paste ---- */
+/* ---- Excel-style paste ---- */
 tbody.addEventListener('paste', e=>{
   const target = e.target;
   if (target.tagName!=='INPUT') return;
@@ -555,7 +669,7 @@ async function pasteColumn(key){
       recalcRow(tr);
     });
     queueSave(); flashStatus('Column pasted ✓');
-  }catch(err){ flashStatus('Clipboard access blocked by browser'); }
+  }catch(err){ flashStatus('Clipboard access blocked'); }
 }
 function flashStatus(msg){
   const el = document.getElementById('saveStatus');
@@ -563,14 +677,32 @@ function flashStatus(msg){
   setTimeout(()=>{ if (el.textContent===msg) el.textContent = prev; }, 1800);
 }
 
-['dealerCode','dealerName','orderDate'].forEach(id=>{
-  document.getElementById(id).addEventListener('input', queueSave);
+['dealerCode','dealerName'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>queueSave());
 });
 ['companyHeading','formTitle'].forEach(id=>{
   document.getElementById(id).addEventListener('input', ()=>{ queueSave(); queueSettingsSave(); });
 });
 
-/* ================= AUTOSAVE + "stay where I left off" ================= */
+/* ---- Date field formatting ---- */
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function formatDateDisplay(iso){
+  if (!iso) return 'Select date';
+  const [y,m,d] = iso.split('-').map(Number);
+  if (!y||!m||!d) return 'Select date';
+  return String(d).padStart(2,'0') + '/' + MONTH_ABBR[m-1] + '/' + y;
+}
+function refreshDateDisplay(){
+  document.getElementById('orderDateDisplay').textContent = formatDateDisplay(document.getElementById('orderDate').value);
+}
+
+document.getElementById('orderDateDisplay').addEventListener('click', ()=>{
+  const dateInput = document.getElementById('orderDate');
+  try{ dateInput.showPicker(); } catch(e){ dateInput.focus(); dateInput.click(); }
+});
+document.getElementById('orderDate').addEventListener('input', ()=>{ refreshDateDisplay(); queueSave(); });
+
+/* ================= AUTOSAVE ================= */
 function queueSave(){
   document.getElementById('saveStatus').textContent = 'Saving…';
   clearTimeout(saveTimer);
@@ -639,6 +771,7 @@ function loadOrder(o){
   document.getElementById('dealerCode').value = o.dealer_code || '';
   document.getElementById('dealerName').value = o.dealer_name || '';
   document.getElementById('orderDate').value = o.order_date || '';
+  refreshDateDisplay();
   tbody.innerHTML = '';
   (o.rows||[]).forEach(r=>newRow(r));
   if (!o.rows || !o.rows.length) newRow();
@@ -654,6 +787,7 @@ async function blankForm(clearLast){
   document.getElementById('dealerCode').value = '';
   document.getElementById('dealerName').value = '';
   document.getElementById('orderDate').valueAsDate = new Date();
+  refreshDateDisplay();
   tbody.innerHTML = '';
   for (let i=0;i<5;i++) newRow();
   document.getElementById('saveStatus').textContent = '\u00A0';
@@ -698,14 +832,36 @@ async function refreshHistoryList(){
   });
 }
 
-/* ================= PRINT (native browser print — repeats the header row on every page automatically) ================= */
+/* ================= PRINT ================= */
+let printSwaps = [];
+function swapInputsForPrint(){
+  printSwaps = [];
+  document.querySelectorAll('#orderTable input').forEach(inp=>{
+    const span = document.createElement('span');
+    span.className = 'printText';
+    span.textContent = inp.value;
+    span.style.textAlign = getComputedStyle(inp).textAlign;
+    inp.insertAdjacentElement('afterend', span);
+    inp.style.display = 'none';
+    printSwaps.push({ input: inp, span });
+  });
+}
+function restoreInputsAfterPrint(){
+  printSwaps.forEach(({ input, span })=>{ span.remove(); input.style.display = ''; });
+  printSwaps = [];
+  if (prevDocTitle !== null){ document.title = prevDocTitle; prevDocTitle = null; }
+}
+let prevDocTitle = null;
+window.addEventListener('afterprint', restoreInputsAfterPrint);
+
 document.getElementById('pdfBtn').onclick = ()=>{
   const dealer = document.getElementById('dealerName').value || 'Order';
   const date = document.getElementById('orderDate').value || '';
-  const prevTitle = document.title;
+  prevDocTitle = document.title;
   document.title = `Order Advice - ${dealer}${date ? ' - '+date : ''}`;
+  swapInputsForPrint();
   window.print();
-  setTimeout(()=>{ document.title = prevTitle; }, 1000);
+  setTimeout(restoreInputsAfterPrint, 4000);
 };
 
 /* ================= AUTH ================= */
@@ -803,6 +959,7 @@ async function showApp(user){
   document.getElementById('dealerCode').value = '';
   document.getElementById('dealerName').value = '';
   document.getElementById('orderDate').valueAsDate = new Date();
+  refreshDateDisplay();
   tbody.innerHTML = '';
   for (let i=0;i<5;i++) newRow();
   document.getElementById('saveStatus').textContent = '\u00A0';
